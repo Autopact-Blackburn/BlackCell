@@ -79,7 +79,7 @@
 
       <section id="usersView" class="hidden">
         <div class="setup-note">Admin-only visibility page. Create Auth users directly in Supabase, then create/update their app_profiles row and optionally link sales_people.user_id for salesperson access.</div>
-        <div class="table-card"><div class="card-head"><div><h2>Staff Access</h2><p>Active/inactive staff access list.</p></div><button id="refreshUsers" class="btn ghost">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email/User ID</th><th>Role</th><th>Department</th><th>Active</th></tr></thead><tbody id="usersBody"></tbody></table></div></div>
+        <div class="table-card"><div class="card-head"><div><h2>Staff Access</h2><p>Active/inactive staff access list.</p></div><button id="refreshUsers" class="btn ghost">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>User ID</th><th>Role</th><th>Department</th><th>Active</th></tr></thead><tbody id="usersBody"></tbody></table></div></div>
       </section>
 
       <section id="setupView" class="hidden">
@@ -116,19 +116,43 @@
   <div id="toast" class="toast hidden"></div>
 
 <script type="module">
-const SUPABASE_URL = 'PASTE_YOUR_SUPABASE_URL_HERE';
-const SUPABASE_ANON_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
-const SQL_SETUP = `-- BASE TABLES
+const SUPABASE_URL = 'https://xlhidioirznkrgknklfl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsaGlkaW9pcnpua3Jna25rbGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMDE5OTQsImV4cCI6MjA5MzY3Nzk5NH0._0dHjR6mcj9N6v0r5yKAvUk59wMfxU8sdS5fLGChQ9A';
+const SQL_SETUP = `-- =====================================================
+-- FINANCE + AFTERCARE DASHBOARD — PRODUCTION CLEAN SETUP
+-- Safe to run multiple times.
+-- =====================================================
+
+create extension if not exists pgcrypto;
+
+-- =====================================================
+-- BASE TABLES
+-- =====================================================
+
 create table if not exists app_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
-  role text not null check (role in ('admin', 'sales_manager', 'finance_manager', 'aftercare_manager', 'salesperson')),
+  email text,
+  role text not null default 'salesperson',
   department text,
   active boolean default true,
   last_login timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+alter table app_profiles add column if not exists full_name text;
+alter table app_profiles add column if not exists email text;
+alter table app_profiles add column if not exists role text;
+alter table app_profiles add column if not exists department text;
+alter table app_profiles add column if not exists active boolean default true;
+alter table app_profiles add column if not exists last_login timestamptz;
+alter table app_profiles add column if not exists created_at timestamptz default now();
+alter table app_profiles add column if not exists updated_at timestamptz default now();
+
+alter table app_profiles drop constraint if exists app_profiles_role_check;
+alter table app_profiles add constraint app_profiles_role_check
+check (role in ('admin', 'sales_manager', 'finance_manager', 'aftercare_manager', 'salesperson'));
 
 create table if not exists sales_people (
   id uuid primary key default gen_random_uuid(),
@@ -138,6 +162,12 @@ create table if not exists sales_people (
   active boolean default true,
   created_at timestamptz default now()
 );
+
+alter table sales_people add column if not exists full_name text;
+alter table sales_people add column if not exists department text;
+alter table sales_people add column if not exists user_id uuid references auth.users(id);
+alter table sales_people add column if not exists active boolean default true;
+alter table sales_people add column if not exists created_at timestamptz default now();
 
 create table if not exists performance_records (
   id uuid primary key default gen_random_uuid(),
@@ -159,6 +189,35 @@ create table if not exists performance_records (
   updated_at timestamptz default now()
 );
 
+alter table performance_records add column if not exists record_type text;
+alter table performance_records add column if not exists status text default 'active';
+alter table performance_records add column if not exists deal_date date;
+alter table performance_records add column if not exists estimated_delivery_date date;
+alter table performance_records add column if not exists delivered_date date;
+alter table performance_records add column if not exists deal_number text;
+alter table performance_records add column if not exists customer_name text;
+alter table performance_records add column if not exists salesperson_id uuid references sales_people(id);
+alter table performance_records add column if not exists salesperson_name text;
+alter table performance_records add column if not exists department text;
+alter table performance_records add column if not exists vehicle_description text;
+alter table performance_records add column if not exists total_income numeric(12,2) default 0;
+alter table performance_records add column if not exists notes text;
+alter table performance_records add column if not exists created_by uuid references auth.users(id);
+alter table performance_records add column if not exists created_at timestamptz default now();
+alter table performance_records add column if not exists updated_at timestamptz default now();
+
+update app_profiles set active = true where active is null;
+update performance_records set status = 'active' where status is null;
+update performance_records set total_income = 0 where total_income is null;
+
+-- =====================================================
+-- INDEXES
+-- =====================================================
+
+create index if not exists idx_app_profiles_role on app_profiles(role);
+create index if not exists idx_app_profiles_active on app_profiles(active);
+create index if not exists idx_sales_people_user_id on sales_people(user_id);
+create index if not exists idx_sales_people_active on sales_people(active);
 create index if not exists idx_performance_records_type on performance_records(record_type);
 create index if not exists idx_performance_records_status on performance_records(status);
 create index if not exists idx_performance_records_deal_date on performance_records(deal_date);
@@ -167,47 +226,136 @@ create index if not exists idx_performance_records_delivered on performance_reco
 create index if not exists idx_performance_records_department on performance_records(department);
 create index if not exists idx_performance_records_salesperson on performance_records(salesperson_id);
 
+-- =====================================================
+-- ENABLE RLS
+-- =====================================================
+
 alter table app_profiles enable row level security;
 alter table sales_people enable row level security;
 alter table performance_records enable row level security;
 
+-- =====================================================
+-- HELPER FUNCTIONS
+-- =====================================================
+
 create or replace function get_my_role()
-returns text language sql security definer as $$
-  select role from app_profiles where id = auth.uid() and active = true;
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select role
+  from app_profiles
+  where id = auth.uid()
+    and active = true;
 $$;
 
 create or replace function get_my_salesperson_id()
-returns uuid language sql security definer as $$
-  select id from sales_people where user_id = auth.uid() and active = true limit 1;
+returns uuid
+language sql
+security definer
+set search_path = public
+as $$
+  select id
+  from sales_people
+  where user_id = auth.uid()
+    and active = true
+  limit 1;
 $$;
 
+-- =====================================================
+-- CLEAN OLD POLICIES
+-- =====================================================
+
 drop policy if exists "profiles can read own profile" on app_profiles;
-create policy "profiles can read own profile" on app_profiles for select using (id = auth.uid() or get_my_role() = 'admin');
+drop policy if exists "profiles_select_own" on app_profiles;
+drop policy if exists "profiles_select_admin_or_own" on app_profiles;
 
 drop policy if exists "users can read sales people" on sales_people;
-create policy "users can read sales people" on sales_people for select using (auth.uid() is not null and get_my_role() is not null);
+drop policy if exists "sales_people_read" on sales_people;
+drop policy if exists "sales_people_select_authenticated" on sales_people;
 
 drop policy if exists "users can read permitted records" on performance_records;
-create policy "users can read permitted records" on performance_records for select using (
+drop policy if exists "records_read" on performance_records;
+drop policy if exists "performance_records_select_by_role" on performance_records;
+
+drop policy if exists "users can insert permitted records" on performance_records;
+drop policy if exists "records_insert" on performance_records;
+drop policy if exists "performance_records_insert_by_role" on performance_records;
+
+drop policy if exists "users can update permitted records" on performance_records;
+drop policy if exists "records_update" on performance_records;
+drop policy if exists "performance_records_update_by_role" on performance_records;
+
+drop policy if exists "performance_records_delete_admin_sales_manager" on performance_records;
+
+-- =====================================================
+-- POLICIES
+-- =====================================================
+
+create policy "profiles_select_admin_or_own"
+on app_profiles
+for select
+using (
+  id = auth.uid()
+  or get_my_role() = 'admin'
+);
+
+create policy "sales_people_select_authenticated"
+on sales_people
+for select
+using (
+  auth.uid() is not null
+  and get_my_role() is not null
+);
+
+create policy "performance_records_select_by_role"
+on performance_records
+for select
+using (
   get_my_role() in ('admin', 'sales_manager')
   or (get_my_role() = 'finance_manager' and record_type = 'finance')
   or (get_my_role() = 'aftercare_manager' and record_type = 'aftercare')
   or (get_my_role() = 'salesperson' and salesperson_id = get_my_salesperson_id())
 );
 
-drop policy if exists "users can insert permitted records" on performance_records;
-create policy "users can insert permitted records" on performance_records for insert with check (
+create policy "performance_records_insert_by_role"
+on performance_records
+for insert
+with check (
   get_my_role() in ('admin', 'sales_manager')
   or (get_my_role() = 'finance_manager' and record_type = 'finance')
   or (get_my_role() = 'aftercare_manager' and record_type = 'aftercare')
 );
 
-drop policy if exists "users can update permitted records" on performance_records;
-create policy "users can update permitted records" on performance_records for update using (
+create policy "performance_records_update_by_role"
+on performance_records
+for update
+using (
+  get_my_role() in ('admin', 'sales_manager')
+  or (get_my_role() = 'finance_manager' and record_type = 'finance')
+  or (get_my_role() = 'aftercare_manager' and record_type = 'aftercare')
+)
+with check (
   get_my_role() in ('admin', 'sales_manager')
   or (get_my_role() = 'finance_manager' and record_type = 'finance')
   or (get_my_role() = 'aftercare_manager' and record_type = 'aftercare')
 );
+
+create policy "performance_records_delete_admin_sales_manager"
+on performance_records
+for delete
+using (
+  get_my_role() in ('admin', 'sales_manager')
+);
+
+-- =====================================================
+-- USER CREATION REMINDER
+-- =====================================================
+-- 1) Create staff in Supabase > Authentication > Users.
+-- 2) Copy the auth user UUID.
+-- 3) Insert matching app_profiles row, including email, role, department, active = true.
+-- 4) For salespeople only, insert/update sales_people.user_id with the same UUID.
 `;
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -224,7 +372,7 @@ function inSelectedMonth(r){ const basis = state.filters.dateBasis; const d = (b
 function filteredRecords(){ let rows = state.records.filter(r=>canSeeType(r.record_type)); if(state.view==='active') rows=rows.filter(r=>r.status==='active'); if(state.view==='archive') rows=rows.filter(r=>r.status==='delivered'); if(state.type!=='all') rows=rows.filter(r=>r.record_type===state.type); if(state.filters.status!=='all') rows=rows.filter(r=>r.status===state.filters.status); if(state.filters.department!=='all') rows=rows.filter(r=>r.department===state.filters.department); if(state.filters.salesperson!=='all') rows=rows.filter(r=>r.salesperson_id===state.filters.salesperson); if(state.filters.month) rows=rows.filter(inSelectedMonth); if(state.filters.search){ const s=state.filters.search.toLowerCase(); rows=rows.filter(r=>[r.deal_number,r.customer_name,r.salesperson_name,r.vehicle_description,r.department].join(' ').toLowerCase().includes(s)); } return rows; }
 
 async function init(){ $('sqlBox').textContent=SQL_SETUP; bindEvents(); const {data:{session}} = await sb.auth.getSession(); if(session) await enterApp(session.user); }
-async function enterApp(user){ state.user=user; const {data,error}=await sb.from('app_profiles').select('*').eq('id',user.id).maybeSingle(); if(error||!data||data.active===false){ await sb.auth.signOut(); showLogin('No active profile found. Ask admin to create/activate your app_profiles row.'); return; } state.profile=data; $('authScreen').classList.add('hidden'); $('app').classList.remove('hidden'); $('userName').textContent=data.full_name||user.email; $('rolePill').textContent=prettyRole(data.role); $('usersNav').style.display=data.role==='admin'?'block':'none'; $('setupNav').style.display=data.role==='admin'?'block':'none'; $('addBtn').style.display=canEdit()?'inline-flex':'none'; await loadAll(); render(); }
+async function enterApp(user){ state.user=user; const {data,error}=await sb.from('app_profiles').select('*').eq('id',user.id).maybeSingle(); if(error||!data||data.active===false){ await sb.auth.signOut(); showLogin('No active profile found. Ask admin to create/activate your app_profiles row.'); return; } state.profile=data; sb.from('app_profiles').update({ last_login: new Date().toISOString() }).eq('id', user.id).then(()=>{}); $('authScreen').classList.add('hidden'); $('app').classList.remove('hidden'); $('userName').textContent=data.full_name||user.email; $('rolePill').textContent=prettyRole(data.role); $('usersNav').style.display=data.role==='admin'?'block':'none'; $('setupNav').style.display=data.role==='admin'?'block':'none'; $('addBtn').style.display=canEdit()?'inline-flex':'none'; await loadAll(); render(); }
 async function loadAll(){ const [{data:sp,error:spErr},{data:recs,error:recErr}] = await Promise.all([sb.from('sales_people').select('*').order('full_name'), sb.from('performance_records').select('*').order('estimated_delivery_date',{ascending:true})]); if(spErr) toast(spErr.message); if(recErr) toast(recErr.message); state.salesPeople=sp||[]; state.records=recs||[]; if(state.profile.role==='admin') await loadUsers(); }
 async function loadUsers(){ const {data,error}=await sb.from('app_profiles').select('*').order('full_name'); if(error) toast(error.message); state.users=data||[]; }
 function showLogin(msg){ $('authScreen').classList.remove('hidden'); $('app').classList.add('hidden'); if(msg){ $('loginError').textContent=msg; $('loginError').classList.remove('hidden'); }}
@@ -238,7 +386,7 @@ function renderFilters(){ const deps=[...new Set(state.records.map(r=>r.departme
 function renderTabs(){ const types=roleAllowedTypes(); const tabs=[`<button class="tab ${state.type==='all'?'active':''}" data-type="all">All</button>`].concat(types.map(t=>`<button class="tab ${state.type===t?'active':''}" data-type="${t}">${t==='finance'?'Finance':'Aftercare'}</button>`)); $('typeTabs').innerHTML=tabs.join(''); document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{state.type=t.dataset.type; renderDashboard();}); if(!types.includes(state.type)&&state.type!=='all') state.type='all'; }
 function renderTable(){ const rows=filteredRecords(); $('recordCount').textContent=`${rows.length} records showing`; $('tableHead').innerHTML='<tr><th>Type</th><th>Status</th><th>Deal Date</th><th>Est Delivery</th><th>Delivered</th><th>Deal #</th><th>Customer</th><th>Salesperson</th><th>Department</th><th>Vehicle</th><th>Total</th></tr>'; $('tableBody').innerHTML=rows.length?rows.map(r=>`<tr data-id="${r.id}"><td><span class="badge ${r.record_type}">${r.record_type}</span></td><td><span class="status-pill ${r.status}">${r.status}</span></td><td>${r.deal_date||''}</td><td>${r.estimated_delivery_date||''}</td><td>${r.delivered_date||''}</td><td>${r.deal_number||''}</td><td>${r.customer_name||''}</td><td>${r.salesperson_name||''}</td><td>${r.department||''}</td><td>${r.vehicle_description||''}</td><td class="money">${money(r.total_income)}</td></tr>`).join(''):`<tr><td colspan="11"><div class="empty">No records match this view.</div></td></tr>`; if(canEdit()) document.querySelectorAll('#tableBody tr[data-id]').forEach(tr=>tr.onclick=()=>openModal(state.records.find(r=>r.id===tr.dataset.id))); }
 function renderTeam(){ const rows=filteredRecords(); const by={}; rows.forEach(r=>{const name=r.salesperson_name||'Unassigned'; by[name]??={name,count:0,total:0,finance:0,aftercare:0}; by[name].count++; by[name].total+=Number(r.total_income||0); by[name][r.record_type]+=Number(r.total_income||0);}); const list=Object.values(by).sort((a,b)=>b.total-a.total); const max=list[0]?.total||1; $('teamStats').innerHTML=`<div class="stat-card"><div class="stat-label">Team Total</div><div class="stat-value">${money(list.reduce((s,x)=>s+x.total,0))}</div><div class="stat-note">Filtered records</div></div><div class="stat-card"><div class="stat-label">Top Performer</div><div class="stat-value">${list[0]?.name||'—'}</div><div class="stat-note">${money(list[0]?.total||0)}</div></div>`; $('leaderboard').innerHTML=list.length?list.map((x,i)=>`<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${x.name}</strong><div class="muted">${x.count} deals · Finance ${money(x.finance)} · Aftercare ${money(x.aftercare)}</div><div class="bar"><i style="width:${Math.max(4,(x.total/max)*100)}%"></i></div></div><strong>${money(x.total)}</strong></div>`).join(''):'<div class="empty">No team data in this filter.</div>'; }
-function renderUsers(){ if(state.profile?.role!=='admin') return; $('usersBody').innerHTML=(state.users||[]).map(u=>`<tr><td>${u.full_name||'—'}</td><td>${u.id}</td><td><span class="role-pill">${prettyRole(u.role)}</span></td><td>${u.department||'—'}</td><td>${u.active===false?'Inactive':'Active'}</td></tr>`).join('')||`<tr><td colspan="5"><div class="empty">No profiles found.</div></td></tr>`; }
+function renderUsers(){ if(state.profile?.role!=='admin') return; $('usersBody').innerHTML=(state.users||[]).map(u=>`<tr><td>${u.full_name||'—'}</td><td>${u.email||'—'}</td><td>${u.id}</td><td><span class="role-pill">${prettyRole(u.role)}</span></td><td>${u.department||'—'}</td><td>${u.active===false?'Inactive':'Active'}</td></tr>`).join('')||`<tr><td colspan="6"><div class="empty">No profiles found.</div></td></tr>`; }
 function openModal(r=null){ if(!canEdit()) return; $('recordForm').reset(); $('recordId').value=r?.id||''; $('modalTitle').textContent=r?'Edit Record':'Add Record'; $('deleteBtn').classList.toggle('hidden',!r); const types=roleAllowedTypes(); $('recordType').innerHTML=types.map(t=>`<option value="${t}">${t==='finance'?'Finance':'Aftercare'}</option>`).join(''); $('salespersonId').innerHTML='<option value="">Select salesperson</option>'+state.salesPeople.filter(s=>s.active!==false).map(s=>`<option value="${s.id}">${s.full_name}</option>`).join(''); if(r){ $('recordType').value=r.record_type; $('status').value=r.status; $('dealDate').value=r.deal_date||''; $('estimatedDeliveryDate').value=r.estimated_delivery_date||''; $('deliveredDate').value=r.delivered_date||''; $('dealNumber').value=r.deal_number||''; $('customerName').value=r.customer_name||''; $('salespersonId').value=r.salesperson_id||''; $('department').value=r.department||''; $('totalIncome').value=r.total_income||0; $('vehicleDescription').value=r.vehicle_description||''; $('notes').value=r.notes||''; } $('modalBackdrop').classList.remove('hidden'); }
 function closeModal(){ $('modalBackdrop').classList.add('hidden'); }
 async function saveRecord(e){ e.preventDefault(); const sp=state.salesPeople.find(x=>x.id===$('salespersonId').value); if($('status').value==='delivered'&&!$('deliveredDate').value){ toast('Delivered records need a delivered date.'); return; } const payload={record_type:$('recordType').value,status:$('status').value,deal_date:$('dealDate').value,estimated_delivery_date:$('estimatedDeliveryDate').value||null,delivered_date:$('deliveredDate').value||null,deal_number:$('dealNumber').value.trim(),customer_name:$('customerName').value.trim(),salesperson_id:sp?.id||null,salesperson_name:sp?.full_name||'',department:$('department').value.trim(),vehicle_description:$('vehicleDescription').value.trim(),total_income:Number($('totalIncome').value||0),notes:$('notes').value.trim(),updated_at:new Date().toISOString()}; let res; if($('recordId').value){ res=await sb.from('performance_records').update(payload).eq('id',$('recordId').value).select().single(); } else { payload.created_by=state.user.id; res=await sb.from('performance_records').insert(payload).select().single(); } if(res.error){ toast(res.error.message); return; } await loadAll(); closeModal(); render(); toast('Record saved.'); }
