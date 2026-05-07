@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance + Aftercare Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --bg:#0f1115;--bg2:#121620;--panel:#171a21;--panel2:#1d212b;--panel3:#222838;
+      --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.14);
+      --text:#f5f7fa;--muted:#9ea7b4;--soft:#6f7785;
+      --green:#35d39d;--green2:#103a30;--cyan:#38c6ff;--cyan2:#0d3445;--amber:#ffbd5a;--red:#ff6b6b;--purple:#a78bfa;
+      --shadow:0 24px 80px rgba(0,0,0,.45);--radius:22px;--radius2:14px;
+      --font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:var(--font);background:radial-gradient(circle at 20% -10%,rgba(56,198,255,.16),transparent 32%),radial-gradient(circle at 90% 0%,rgba(53,211,157,.12),transparent 28%),var(--bg);color:var(--text);min-height:100vh} button,input,select,textarea{font:inherit} button{cursor:pointer} .hidden{display:none!important}
+    .auth-screen{min-height:100vh;display:grid;grid-template-columns:minmax(360px,1.1fr) minmax(360px,.9fr);overflow:hidden}.auth-brand{position:relative;padding:70px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(145deg,rgba(29,33,43,.9),rgba(15,17,21,.96));border-right:1px solid var(--line)}.orb{position:absolute;border-radius:999px;filter:blur(12px);opacity:.55}.orb.one{width:360px;height:360px;background:rgba(56,198,255,.22);left:-130px;top:-120px}.orb.two{width:280px;height:280px;background:rgba(53,211,157,.16);right:70px;bottom:90px}.brand-copy{position:relative;z-index:1}.brand-pill{display:inline-flex;gap:8px;align-items:center;color:var(--green);border:1px solid rgba(53,211,157,.22);background:rgba(53,211,157,.08);padding:8px 12px;border-radius:999px;font-size:13px}.brand-copy h1{font-size:58px;line-height:.96;margin:28px 0 18px;letter-spacing:-.055em}.brand-copy p{max-width:660px;color:var(--muted);font-size:18px;line-height:1.65}.brand-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.brand-stat{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:18px;padding:18px}.brand-stat b{display:block;font-size:24px}.brand-stat span{color:var(--muted);font-size:13px}.auth-panel{display:flex;align-items:center;justify-content:center;padding:42px}.login-card{width:min(450px,100%);background:rgba(23,26,33,.78);border:1px solid var(--line2);box-shadow:var(--shadow);backdrop-filter:blur(18px);border-radius:28px;padding:34px}.login-card h2{margin:0 0 8px;font-size:30px;letter-spacing:-.03em}.login-card p{margin:0 0 28px;color:var(--muted)}.field{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}.field label{font-size:13px;color:var(--muted);font-weight:650}.input,select,textarea{width:100%;border:1px solid var(--line);background:#11151e;color:var(--text);border-radius:14px;padding:12px 13px;outline:none}.input:focus,select:focus,textarea:focus{border-color:rgba(56,198,255,.55);box-shadow:0 0 0 4px rgba(56,198,255,.08)}.btn{border:0;border-radius:14px;padding:12px 15px;color:var(--text);background:#2a3141;transition:.18s ease;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn:hover{transform:translateY(-1px);filter:brightness(1.07)}.btn.primary{background:linear-gradient(135deg,#36d399,#38c6ff);color:#061018;font-weight:850}.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}.btn.danger{background:rgba(255,107,107,.12);color:#ffb3b3;border:1px solid rgba(255,107,107,.25)}.btn.small{padding:8px 10px;border-radius:11px;font-size:12px}.login-error{margin-top:14px;color:#ffb3b3;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.18);padding:11px;border-radius:14px}.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;padding:24px;border-right:1px solid var(--line);background:rgba(15,17,21,.78);backdrop-filter:blur(16px)}.logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}.logo-mark{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--cyan));box-shadow:0 10px 35px rgba(56,198,255,.18)}.logo strong{display:block}.logo span{font-size:12px;color:var(--muted)}.nav{display:flex;flex-direction:column;gap:8px}.nav button{width:100%;text-align:left;border:1px solid transparent;background:transparent;color:var(--muted);padding:12px 14px;border-radius:14px}.nav button.active,.nav button:hover{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--text)}.side-foot{position:absolute;bottom:24px;left:24px;right:24px;color:var(--soft);font-size:12px}.main{min-width:0;padding:24px 28px 42px}.topbar{position:sticky;top:0;z-index:30;margin:-24px -28px 24px;padding:18px 28px;background:rgba(15,17,21,.78);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:18px}.top-title h1{margin:0;font-size:26px;letter-spacing:-.035em}.top-title p{margin:4px 0 0;color:var(--muted);font-size:13px}.user-chip{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px;padding:8px 10px 8px 14px}.role-pill,.badge,.status-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}.role-pill{background:rgba(167,139,250,.12);color:#d5c8ff;border:1px solid rgba(167,139,250,.24)}.badge.finance{background:rgba(53,211,157,.12);color:#9ff0cf;border:1px solid rgba(53,211,157,.22)}.badge.aftercare{background:rgba(56,198,255,.12);color:#aee8ff;border:1px solid rgba(56,198,255,.22)}.status-pill.active{background:rgba(56,198,255,.1);color:#aee8ff}.status-pill.delivered{background:rgba(255,189,90,.12);color:#ffd6a0}.grid{display:grid;gap:16px}.stats{grid-template-columns:repeat(6,minmax(140px,1fr));margin-bottom:18px}.stat-card{background:linear-gradient(180deg,rgba(29,33,43,.96),rgba(23,26,33,.96));border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 18px 50px rgba(0,0,0,.18);transition:.2s ease;position:relative;overflow:hidden}.stat-card:before{content:"";position:absolute;inset:auto 18px 0 18px;height:2px;background:linear-gradient(90deg,transparent,rgba(56,198,255,.7),rgba(53,211,157,.7),transparent);opacity:.35}.stat-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.16)}.stat-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.stat-value{font-size:25px;font-weight:900;letter-spacing:-.04em;margin-top:8px}.stat-note{font-size:12px;color:var(--soft);margin-top:6px}.toolbar{background:rgba(23,26,33,.78);border:1px solid var(--line);border-radius:var(--radius);padding:15px;display:grid;grid-template-columns:repeat(7,minmax(140px,1fr));gap:12px;margin-bottom:18px}.toolbar .field{margin:0}.table-card,.panel{background:rgba(23,26,33,.84);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 20px 60px rgba(0,0,0,.18);overflow:hidden}.card-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.card-head h2{margin:0;font-size:18px}.card-head p{margin:4px 0 0;color:var(--muted);font-size:13px}.table-wrap{overflow:auto;max-height:58vh}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1120px}th{position:sticky;top:0;z-index:4;background:#171b24;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:13px 14px;border-bottom:1px solid var(--line)}td{padding:14px;border-bottom:1px solid rgba(255,255,255,.055);font-size:14px;color:#dce2ea}tr:hover td{background:rgba(255,255,255,.035)}.money{font-weight:900;color:#bff8df}.muted{color:var(--muted)}.empty{padding:44px;text-align:center;color:var(--muted)}.tabs{display:flex;gap:8px;margin:0 0 18px}.tab{border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--muted);border-radius:999px;padding:10px 14px}.tab.active{background:rgba(56,198,255,.12);color:#dff6ff;border-color:rgba(56,198,255,.3)}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:22px}.modal{width:min(820px,100%);max-height:92vh;overflow:auto;background:#171b24;border:1px solid var(--line2);border-radius:28px;box-shadow:var(--shadow)}.modal-head{padding:22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h2{margin:0}.modal-body{padding:22px}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.full{grid-column:1/-1}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.leaderboard{display:grid;gap:10px;padding:16px}.leader-row{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:16px;padding:12px}.rank{width:34px;height:34px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.06);font-weight:900}.bar{height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:7px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:999px}.setup-note{background:rgba(255,189,90,.08);border:1px solid rgba(255,189,90,.18);border-radius:18px;padding:14px;color:#ffe1b8;margin-bottom:16px}.codebox{white-space:pre-wrap;background:#0b0d12;border:1px solid var(--line);border-radius:16px;padding:16px;color:#cbd5e1;max-height:440px;overflow:auto;font-size:12px}.toast{position:fixed;right:22px;bottom:22px;background:#17221f;border:1px solid rgba(53,211,157,.25);color:#d8ffef;border-radius:16px;padding:13px 15px;box-shadow:var(--shadow);z-index:200}.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.22);border-top-color:#fff;border-radius:999px;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:1100px){.auth-screen{grid-template-columns:1fr}.auth-brand{display:none}.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.side-foot{display:none}.stats{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:repeat(2,1fr)}.topbar{position:relative;margin:0 0 18px;padding:0 0 18px;background:transparent}.main{padding:18px}.form-grid{grid-template-columns:1fr}}@media(max-width:640px){.stats,.toolbar{grid-template-columns:1fr}.user-chip{display:none}.card-head{align-items:flex-start;flex-direction:column}.auth-panel{padding:18px}.login-card{padding:24px}}
+  </style>
+</head>
+<body>
+  <div id="authScreen" class="auth-screen">
+    <section class="auth-brand">
+      <div class="orb one"></div><div class="orb two"></div>
+      <div class="brand-copy">
+        <div class="brand-pill">● Internal performance command centre</div>
+        <h1>Finance + Aftercare, rebuilt properly.</h1>
+        <p>A clean operational dashboard for deal coverage, delivery forecasting, income tracking, staff visibility and historical records.</p>
+      </div>
+      <div class="brand-stats">
+        <div class="brand-stat"><b>Role</b><span>permission based</span></div>
+        <div class="brand-stat"><b>CSV</b><span>filtered exports</span></div>
+        <div class="brand-stat"><b>Archive</b><span>delivered history</span></div>
+      </div>
+    </section>
+    <section class="auth-panel">
+      <form id="loginForm" class="login-card">
+        <h2>Sign in</h2>
+        <p>Use your Supabase staff login.</p>
+        <div class="field"><label>Email</label><input id="email" class="input" type="email" required autocomplete="email" /></div>
+        <div class="field"><label>Password</label><input id="password" class="input" type="password" required autocomplete="current-password" /></div>
+        <button class="btn primary" type="submit" style="width:100%"><span id="loginSpin" class="spinner hidden"></span>Sign in</button>
+        <div id="loginError" class="login-error hidden"></div>
+      </form>
+    </section>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="logo"><div class="logo-mark"></div><div><strong>Dealer Ops</strong><span>Finance + Aftercare</span></div></div>
+      <nav class="nav">
+        <button data-view="dashboard" class="active">Dashboard</button>
+        <button data-view="active">Active Deals</button>
+        <button data-view="archive">Delivered Archive</button>
+        <button data-view="team">Team Performance</button>
+        <button data-view="users" id="usersNav">User Management</button>
+        <button data-view="setup" id="setupNav">SQL Setup</button>
+      </nav>
+      <div class="side-foot">Single-file build. Supabase secured by RLS.</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-title"><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">This month, filtered by your access level.</p></div>
+        <div class="user-chip"><span id="userName">Loading…</span><span id="rolePill" class="role-pill">role</span><button id="logoutBtn" class="btn small ghost">Logout</button></div>
+      </header>
+
+      <section id="dashboardView">
+        <div class="grid stats" id="statsGrid"></div>
+        <div class="toolbar" id="filtersBar"></div>
+        <div class="tabs" id="typeTabs"></div>
+        <div class="table-card"><div class="card-head"><div><h2>Deals</h2><p id="recordCount">Filtered operational view</p></div><div><button id="addBtn" class="btn primary">+ Add Record</button></div></div><div class="table-wrap"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div></div>
+      </section>
+
+      <section id="teamView" class="hidden">
+        <div class="grid stats" id="teamStats"></div>
+        <div class="panel"><div class="card-head"><div><h2>Salesperson Leaderboard</h2><p>Income ranking based on currently filtered records.</p></div></div><div id="leaderboard" class="leaderboard"></div></div>
+      </section>
+
+      <section id="usersView" class="hidden">
+        <div class="setup-note">Admin-only visibility page. Create Auth users directly in Supabase, then create/update their app_profiles row and optionally link sales_people.user_id for salesperson access.</div>
+        <div class="table-card"><div class="card-head"><div><h2>Staff Access</h2><p>Active/inactive staff access list.</p></div><button id="refreshUsers" class="btn ghost">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email/User ID</th><th>Role</th><th>Department</th><th>Active</th></tr></thead><tbody id="usersBody"></tbody></table></div></div>
+      </section>
+
+      <section id="setupView" class="hidden">
+        <div class="setup-note">Run this SQL in Supabase SQL Editor before using salesperson logins and inactive offboarding.</div>
+        <div class="codebox" id="sqlBox"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <form id="recordForm" class="modal">
+      <div class="modal-head"><h2 id="modalTitle">Add Record</h2><button type="button" id="closeModal" class="btn small ghost">Close</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="recordId" />
+        <div class="form-grid">
+          <div class="field"><label>Type</label><select id="recordType" required></select></div>
+          <div class="field"><label>Status</label><select id="status"><option value="active">Active</option><option value="delivered">Delivered</option></select></div>
+          <div class="field"><label>Deal Date</label><input id="dealDate" class="input" type="date" required /></div>
+          <div class="field"><label>Estimated Delivery Date</label><input id="estimatedDeliveryDate" class="input" type="date" /></div>
+          <div class="field"><label>Delivered Date</label><input id="deliveredDate" class="input" type="date" /></div>
+          <div class="field"><label>Deal Number</label><input id="dealNumber" class="input" required /></div>
+          <div class="field"><label>Customer Name</label><input id="customerName" class="input" required /></div>
+          <div class="field"><label>Sales Person</label><select id="salespersonId"></select></div>
+          <div class="field"><label>Department</label><input id="department" class="input" required placeholder="Kia / Nissan / GWM etc" /></div>
+          <div class="field"><label>Total Income</label><input id="totalIncome" class="input" type="number" step="0.01" required /></div>
+          <div class="field full"><label>Car / Vehicle</label><input id="vehicleDescription" class="input" required /></div>
+          <div class="field full"><label>Notes</label><textarea id="notes" rows="3"></textarea></div>
+        </div>
+        <div class="actions"><button type="button" id="deleteBtn" class="btn danger hidden">Delete</button><button type="button" id="cancelBtn" class="btn ghost">Cancel</button><button class="btn primary" type="submit">Save Record</button></div>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+<script type="module">
+const SUPABASE_URL = 'PASTE_YOUR_SUPABASE_URL_HERE';
+const SUPABASE_ANON_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
+const SQL_SETUP = `-- BASE TABLES
+create table if not exists app_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
+  role text not null check (role in ('admin', 'sales_manager', 'finance_manager', 'aftercare_manager', 'salesperson')),
+  department text,
+  active boolean default true,
+  last_login timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists sales_people (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  department text,
+  user_id uuid references auth.users(id),
+  active boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists performance_records (
+  id uuid primary key default gen_random_uuid(),
+  record_type text not null check (record_type in ('finance', 'aftercare')),
+  status text not null default 'active' check (status in ('active', 'delivered')),
+  deal_date date not null,
+  estimated_delivery_date date,
+  delivered_date date,
+  deal_number text not null,
+  customer_name text not null,
+  salesperson_id uuid references sales_people(id),
+  salesperson_name text,
+  department text not null,
+  vehicle_description text not null,
+  total_income numeric(12,2) not null default 0,
+  notes text,
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_performance_records_type on performance_records(record_type);
+create index if not exists idx_performance_records_status on performance_records(status);
+create index if not exists idx_performance_records_deal_date on performance_records(deal_date);
+create index if not exists idx_performance_records_est_delivery on performance_records(estimated_delivery_date);
+create index if not exists idx_performance_records_delivered on performance_records(delivered_date);
+create index if not exists idx_performance_records_department on performance_records(department);
+create index if not exists idx_performance_records_salesperson on performance_records(salesperson_id);
+
+alter table app_profiles enable row level security;
+alter table sales_people enable row level security;
+alter table performance_records enable row level security;
+
+create or replace function get_my_role()
+returns text language sql security definer as $$
+  select role from app_profiles where id = auth.uid() and active = true;
+$$;
+
+create or replace function get_my_salesperson_id()
+returns uuid language sql security definer as $$
+  select id from sales_people where user_id = auth.uid() and active = true limit 1;
+$$;
+
+drop policy if exists "profiles can read own profile" on app_profiles;
+create policy "profiles can read own profile" on app_profiles for select using (id = auth.uid() or get_my_role() = 'admin');
+
+drop policy if exists "users can read sales people" on sales_people;
+create policy "users can read sales people" on sales_people for select using (auth.uid() is not null and get_my_role() is not null);
+
+drop policy if exists "users can read permitted records" on performance_records;
+create policy "users can read permitted records" on performance_records for select using (
+  get_my_role() in ('admin', 'sales_manager')
+  or (get_my_role() = 'finance_manager' and record_type = 'finance')
+  or (get_my_role() = 'aftercare_manager' and record_type = 'aftercare')
+  or (get_my_role() = 'salesperson' and salesperson_id = get_my_salesperson_id())
+);
+
+drop policy if exists "users can insert permitted records" on performance_records;
+create policy "users can insert permitted records" on performance_records for insert with check (
+  get_my_role() in ('admin', 'sales_manager')
+  or (get_my_role() = 'finance_manager' and record_type = 'finance')
+  or (get_my_role() = 'aftercare_manager' and record_type = 'aftercare')
+);
+
+drop policy if exists "users can update permitted records" on performance_records;
+create policy "users can update permitted records" on performance_records for update using (
+  get_my_role() in ('admin', 'sales_manager')
+  or (get_my_role() = 'finance_manager' and record_type = 'finance')
+  or (get_my_role() = 'aftercare_manager' and record_type = 'aftercare')
+);
+`;
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (id)=>document.getElementById(id);
+const state = { user:null, profile:null, salesPeople:[], records:[], users:[], view:'dashboard', type:'all', filters:{month:new Date().toISOString().slice(0,7), status:'all', department:'all', salesperson:'all', dateBasis:'estimated_delivery_date', search:''} };
+const money = n => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',maximumFractionDigits:0}).format(Number(n||0));
+const prettyRole = r => ({admin:'Admin',sales_manager:'Sales Manager',finance_manager:'Finance Manager',aftercare_manager:'Aftercare Manager',salesperson:'Salesperson'}[r]||r);
+const canEdit = () => ['admin','sales_manager','finance_manager','aftercare_manager'].includes(state.profile?.role);
+const canSeeType = t => state.profile?.role==='finance_manager'?t==='finance':state.profile?.role==='aftercare_manager'?t==='aftercare':true;
+const toast = msg => { $('toast').textContent=msg; $('toast').classList.remove('hidden'); setTimeout(()=>$('toast').classList.add('hidden'),2400); };
+const roleAllowedTypes = () => state.profile?.role==='finance_manager'?['finance']:state.profile?.role==='aftercare_manager'?['aftercare']:['finance','aftercare'];
+
+function inSelectedMonth(r){ const basis = state.filters.dateBasis; const d = (basis==='delivered_date' ? r.delivered_date : r.estimated_delivery_date) || r.deal_date; return d && d.slice(0,7)===state.filters.month; }
+function filteredRecords(){ let rows = state.records.filter(r=>canSeeType(r.record_type)); if(state.view==='active') rows=rows.filter(r=>r.status==='active'); if(state.view==='archive') rows=rows.filter(r=>r.status==='delivered'); if(state.type!=='all') rows=rows.filter(r=>r.record_type===state.type); if(state.filters.status!=='all') rows=rows.filter(r=>r.status===state.filters.status); if(state.filters.department!=='all') rows=rows.filter(r=>r.department===state.filters.department); if(state.filters.salesperson!=='all') rows=rows.filter(r=>r.salesperson_id===state.filters.salesperson); if(state.filters.month) rows=rows.filter(inSelectedMonth); if(state.filters.search){ const s=state.filters.search.toLowerCase(); rows=rows.filter(r=>[r.deal_number,r.customer_name,r.salesperson_name,r.vehicle_description,r.department].join(' ').toLowerCase().includes(s)); } return rows; }
+
+async function init(){ $('sqlBox').textContent=SQL_SETUP; bindEvents(); const {data:{session}} = await sb.auth.getSession(); if(session) await enterApp(session.user); }
+async function enterApp(user){ state.user=user; const {data,error}=await sb.from('app_profiles').select('*').eq('id',user.id).maybeSingle(); if(error||!data||data.active===false){ await sb.auth.signOut(); showLogin('No active profile found. Ask admin to create/activate your app_profiles row.'); return; } state.profile=data; $('authScreen').classList.add('hidden'); $('app').classList.remove('hidden'); $('userName').textContent=data.full_name||user.email; $('rolePill').textContent=prettyRole(data.role); $('usersNav').style.display=data.role==='admin'?'block':'none'; $('setupNav').style.display=data.role==='admin'?'block':'none'; $('addBtn').style.display=canEdit()?'inline-flex':'none'; await loadAll(); render(); }
+async function loadAll(){ const [{data:sp,error:spErr},{data:recs,error:recErr}] = await Promise.all([sb.from('sales_people').select('*').order('full_name'), sb.from('performance_records').select('*').order('estimated_delivery_date',{ascending:true})]); if(spErr) toast(spErr.message); if(recErr) toast(recErr.message); state.salesPeople=sp||[]; state.records=recs||[]; if(state.profile.role==='admin') await loadUsers(); }
+async function loadUsers(){ const {data,error}=await sb.from('app_profiles').select('*').order('full_name'); if(error) toast(error.message); state.users=data||[]; }
+function showLogin(msg){ $('authScreen').classList.remove('hidden'); $('app').classList.add('hidden'); if(msg){ $('loginError').textContent=msg; $('loginError').classList.remove('hidden'); }}
+
+function bindEvents(){ $('loginForm').addEventListener('submit',async e=>{ e.preventDefault(); $('loginSpin').classList.remove('hidden'); $('loginError').classList.add('hidden'); const {data,error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value}); $('loginSpin').classList.add('hidden'); if(error) return showLogin(error.message); await enterApp(data.user); }); $('logoutBtn').onclick=async()=>{await sb.auth.signOut(); location.reload();}; document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view; document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); render();}); $('addBtn').onclick=()=>openModal(); $('closeModal').onclick=closeModal; $('cancelBtn').onclick=closeModal; $('recordForm').addEventListener('submit',saveRecord); $('deleteBtn').onclick=deleteRecord; $('refreshUsers').onclick=async()=>{await loadUsers(); renderUsers();}; }
+
+function render(){ const titles={dashboard:['Dashboard','This month, filtered by your access level.'],active:['Active Deals','Open pipeline based on estimated delivery timing.'],archive:['Delivered Archive','Historical delivered records by delivered month.'],team:['Team Performance','Salesperson ranking and coverage summary.'],users:['User Management','Admin-only staff visibility.'],setup:['SQL Setup','Copy this SQL into Supabase SQL Editor.']}; $('pageTitle').textContent=titles[state.view]?.[0]||'Dashboard'; $('pageSubtitle').textContent=titles[state.view]?.[1]||''; ['dashboardView','teamView','usersView','setupView'].forEach(id=>$(id).classList.add('hidden')); if(['dashboard','active','archive'].includes(state.view)){ $('dashboardView').classList.remove('hidden'); renderDashboard(); } if(state.view==='team'){ $('teamView').classList.remove('hidden'); renderTeam(); } if(state.view==='users'){ $('usersView').classList.remove('hidden'); renderUsers(); } if(state.view==='setup') $('setupView').classList.remove('hidden'); }
+function renderDashboard(){ state.filters.dateBasis = state.view==='archive'?'delivered_date':'estimated_delivery_date'; renderStats(); renderFilters(); renderTabs(); renderTable(); }
+function renderStats(){ const rows=filteredRecords(); const finance=rows.filter(r=>r.record_type==='finance'); const after=rows.filter(r=>r.record_type==='aftercare'); const total=rows.reduce((s,r)=>s+Number(r.total_income||0),0); const active=rows.filter(r=>r.status==='active').length; const delivered=rows.filter(r=>r.status==='delivered').length; const cards=[['Total Income',money(total),'Filtered income'],['Deals',rows.length,'Current view'],['Average / Deal',money(rows.length?total/rows.length:0),'Income average'],['Active',active,'Open records'],['Finance',money(finance.reduce((s,r)=>s+Number(r.total_income||0),0)),finance.length+' deals'],['Aftercare',money(after.reduce((s,r)=>s+Number(r.total_income||0),0)),after.length+' deals']]; $('statsGrid').innerHTML=cards.map(c=>`<div class="stat-card"><div class="stat-label">${c[0]}</div><div class="stat-value">${c[1]}</div><div class="stat-note">${c[2]}</div></div>`).join(''); }
+function renderFilters(){ const deps=[...new Set(state.records.map(r=>r.department).filter(Boolean))].sort(); const sps=state.salesPeople.filter(s=>s.active!==false); $('filtersBar').innerHTML=`<div class="field"><label>Month</label><input id="fMonth" class="input" type="month" value="${state.filters.month}"></div><div class="field"><label>Status</label><select id="fStatus"><option value="all">All</option><option value="active">Active</option><option value="delivered">Delivered</option></select></div><div class="field"><label>Department</label><select id="fDepartment"><option value="all">All departments</option>${deps.map(d=>`<option>${d}</option>`).join('')}</select></div><div class="field"><label>Salesperson</label><select id="fSalesperson"><option value="all">All salespeople</option>${sps.map(s=>`<option value="${s.id}">${s.full_name}</option>`).join('')}</select></div><div class="field"><label>Search</label><input id="fSearch" class="input" placeholder="Deal, customer, car" value="${state.filters.search}"></div><div class="field"><label>Export</label><button id="exportFinance" class="btn ghost">Finance CSV</button></div><div class="field"><label>&nbsp;</label><button id="exportAftercare" class="btn ghost">Aftercare CSV</button></div>`; $('fStatus').value=state.filters.status; $('fDepartment').value=state.filters.department; $('fSalesperson').value=state.filters.salesperson; $('fMonth').onchange=e=>{state.filters.month=e.target.value; renderDashboard();}; $('fStatus').onchange=e=>{state.filters.status=e.target.value; renderDashboard();}; $('fDepartment').onchange=e=>{state.filters.department=e.target.value; renderDashboard();}; $('fSalesperson').onchange=e=>{state.filters.salesperson=e.target.value; renderDashboard();}; $('fSearch').oninput=e=>{state.filters.search=e.target.value; renderTable(); renderStats();}; $('exportFinance').onclick=()=>exportCsv('finance'); $('exportAftercare').onclick=()=>exportCsv('aftercare'); }
+function renderTabs(){ const types=roleAllowedTypes(); const tabs=[`<button class="tab ${state.type==='all'?'active':''}" data-type="all">All</button>`].concat(types.map(t=>`<button class="tab ${state.type===t?'active':''}" data-type="${t}">${t==='finance'?'Finance':'Aftercare'}</button>`)); $('typeTabs').innerHTML=tabs.join(''); document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{state.type=t.dataset.type; renderDashboard();}); if(!types.includes(state.type)&&state.type!=='all') state.type='all'; }
+function renderTable(){ const rows=filteredRecords(); $('recordCount').textContent=`${rows.length} records showing`; $('tableHead').innerHTML='<tr><th>Type</th><th>Status</th><th>Deal Date</th><th>Est Delivery</th><th>Delivered</th><th>Deal #</th><th>Customer</th><th>Salesperson</th><th>Department</th><th>Vehicle</th><th>Total</th></tr>'; $('tableBody').innerHTML=rows.length?rows.map(r=>`<tr data-id="${r.id}"><td><span class="badge ${r.record_type}">${r.record_type}</span></td><td><span class="status-pill ${r.status}">${r.status}</span></td><td>${r.deal_date||''}</td><td>${r.estimated_delivery_date||''}</td><td>${r.delivered_date||''}</td><td>${r.deal_number||''}</td><td>${r.customer_name||''}</td><td>${r.salesperson_name||''}</td><td>${r.department||''}</td><td>${r.vehicle_description||''}</td><td class="money">${money(r.total_income)}</td></tr>`).join(''):`<tr><td colspan="11"><div class="empty">No records match this view.</div></td></tr>`; if(canEdit()) document.querySelectorAll('#tableBody tr[data-id]').forEach(tr=>tr.onclick=()=>openModal(state.records.find(r=>r.id===tr.dataset.id))); }
+function renderTeam(){ const rows=filteredRecords(); const by={}; rows.forEach(r=>{const name=r.salesperson_name||'Unassigned'; by[name]??={name,count:0,total:0,finance:0,aftercare:0}; by[name].count++; by[name].total+=Number(r.total_income||0); by[name][r.record_type]+=Number(r.total_income||0);}); const list=Object.values(by).sort((a,b)=>b.total-a.total); const max=list[0]?.total||1; $('teamStats').innerHTML=`<div class="stat-card"><div class="stat-label">Team Total</div><div class="stat-value">${money(list.reduce((s,x)=>s+x.total,0))}</div><div class="stat-note">Filtered records</div></div><div class="stat-card"><div class="stat-label">Top Performer</div><div class="stat-value">${list[0]?.name||'—'}</div><div class="stat-note">${money(list[0]?.total||0)}</div></div>`; $('leaderboard').innerHTML=list.length?list.map((x,i)=>`<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${x.name}</strong><div class="muted">${x.count} deals · Finance ${money(x.finance)} · Aftercare ${money(x.aftercare)}</div><div class="bar"><i style="width:${Math.max(4,(x.total/max)*100)}%"></i></div></div><strong>${money(x.total)}</strong></div>`).join(''):'<div class="empty">No team data in this filter.</div>'; }
+function renderUsers(){ if(state.profile?.role!=='admin') return; $('usersBody').innerHTML=(state.users||[]).map(u=>`<tr><td>${u.full_name||'—'}</td><td>${u.id}</td><td><span class="role-pill">${prettyRole(u.role)}</span></td><td>${u.department||'—'}</td><td>${u.active===false?'Inactive':'Active'}</td></tr>`).join('')||`<tr><td colspan="5"><div class="empty">No profiles found.</div></td></tr>`; }
+function openModal(r=null){ if(!canEdit()) return; $('recordForm').reset(); $('recordId').value=r?.id||''; $('modalTitle').textContent=r?'Edit Record':'Add Record'; $('deleteBtn').classList.toggle('hidden',!r); const types=roleAllowedTypes(); $('recordType').innerHTML=types.map(t=>`<option value="${t}">${t==='finance'?'Finance':'Aftercare'}</option>`).join(''); $('salespersonId').innerHTML='<option value="">Select salesperson</option>'+state.salesPeople.filter(s=>s.active!==false).map(s=>`<option value="${s.id}">${s.full_name}</option>`).join(''); if(r){ $('recordType').value=r.record_type; $('status').value=r.status; $('dealDate').value=r.deal_date||''; $('estimatedDeliveryDate').value=r.estimated_delivery_date||''; $('deliveredDate').value=r.delivered_date||''; $('dealNumber').value=r.deal_number||''; $('customerName').value=r.customer_name||''; $('salespersonId').value=r.salesperson_id||''; $('department').value=r.department||''; $('totalIncome').value=r.total_income||0; $('vehicleDescription').value=r.vehicle_description||''; $('notes').value=r.notes||''; } $('modalBackdrop').classList.remove('hidden'); }
+function closeModal(){ $('modalBackdrop').classList.add('hidden'); }
+async function saveRecord(e){ e.preventDefault(); const sp=state.salesPeople.find(x=>x.id===$('salespersonId').value); if($('status').value==='delivered'&&!$('deliveredDate').value){ toast('Delivered records need a delivered date.'); return; } const payload={record_type:$('recordType').value,status:$('status').value,deal_date:$('dealDate').value,estimated_delivery_date:$('estimatedDeliveryDate').value||null,delivered_date:$('deliveredDate').value||null,deal_number:$('dealNumber').value.trim(),customer_name:$('customerName').value.trim(),salesperson_id:sp?.id||null,salesperson_name:sp?.full_name||'',department:$('department').value.trim(),vehicle_description:$('vehicleDescription').value.trim(),total_income:Number($('totalIncome').value||0),notes:$('notes').value.trim(),updated_at:new Date().toISOString()}; let res; if($('recordId').value){ res=await sb.from('performance_records').update(payload).eq('id',$('recordId').value).select().single(); } else { payload.created_by=state.user.id; res=await sb.from('performance_records').insert(payload).select().single(); } if(res.error){ toast(res.error.message); return; } await loadAll(); closeModal(); render(); toast('Record saved.'); }
+async function deleteRecord(){ const id=$('recordId').value; if(!id||!confirm('Delete this record? Historical best practice is to mark delivered instead.')) return; const {error}=await sb.from('performance_records').delete().eq('id',id); if(error){toast(error.message);return;} await loadAll(); closeModal(); render(); toast('Record deleted.'); }
+function exportCsv(type){ const rows=filteredRecords().filter(r=>r.record_type===type); const headers=['record_type','status','deal_date','estimated_delivery_date','delivered_date','deal_number','customer_name','salesperson_name','department','vehicle_description','total_income','notes']; const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>`"${String(r[h]??'').replaceAll('"','""')}"`).join(','))).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${type}_${state.filters.month||'export'}.csv`; a.click(); URL.revokeObjectURL(a.href); }
+
+init();
+</script>
+</body>
+</html>
